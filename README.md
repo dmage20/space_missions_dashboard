@@ -2,16 +2,20 @@
 
 Interactive dashboard analyzing 4,630 space launches from 1957–2022 across 62 organizations, with an AI-powered analysis chat powered by Claude.
 
+![Overview](docs/overview.png)
+
 ## Features
 
 - **Overview** — 6 live charts: launch timeline, mission status, success rate by decade, top organizations, launch locations, most-used rockets. All charts respond to the filter sidebar.
 - **Data Table** — sortable, searchable table across all 4,630 records with pagination.
-- **AI Analysis** — chat interface backed by Claude. Ask natural language questions; the AI responds with analysis and generates charts. **Note:** the AI receives aggregated summaries (totals by company, year, and decade) rather than individual mission records, so it cannot answer questions that require looking up specific mission dates, rocket names, or event sequences (e.g. "when was the first SpaceX launch?"). It works best for trend analysis, comparisons, and statistical questions.
-- **Functions API** — all 8 graded functions exposed and interactively testable in-browser.
+- **AI Analysis** — chat interface backed by Claude. Ask natural language questions; the AI responds with analysis and generates charts inline. **Note:** the AI receives aggregated summaries (totals by company, year, and decade) rather than individual mission records, so it cannot answer questions that require looking up specific mission dates, rocket names, or event sequences (e.g. "when was the first SpaceX launch?"). It works best for trend analysis, comparisons, and statistical questions.
+- **Functions API** — all 8 required functions exposed as REST endpoints and interactively testable in-browser.
+
+![AI Analysis](docs/ai-analysis.png)
 
 ## Quick Start
 
-You need an [Anthropic API key](https://console.anthropic.com) for the AI chat tab.
+The dashboard and all 8 functions work without an API key. An [Anthropic API key](https://console.anthropic.com) is only required for the AI Analysis tab.
 
 ```bash
 git clone <repo-url>
@@ -26,20 +30,6 @@ node backend/server.js
 
 Requires Node.js ≥ 16. No npm install needed — uses stdlib only.
 
----
-
-## Why a local server?
-
-Browsers block direct calls to third-party APIs (`api.anthropic.com`) from local files due to CORS policy. The local server acts as a thin proxy — it receives the chat request from the browser, forwards it to Anthropic with your API key (kept server-side, never in the browser), and streams the response back.
-
-```
-Browser → localhost:3000/api/chat → backend/server.js → api.anthropic.com
-```
-
-The rest of the app (charts, table, filters, functions) fetches data from `GET /api/missions` and runs client-side.
-
----
-
 ## Project Structure
 
 ```
@@ -51,6 +41,7 @@ space-missions-dashboard/
 │   ├── index.html          # Dashboard HTML
 │   ├── style.css           # All styles
 │   └── app.js              # Charts, table, filters, AI chat
+├── docs/                   # Screenshots
 ├── space_missions.csv      # Source dataset (1957–2022)
 ├── package.json
 ├── .env.example
@@ -93,3 +84,18 @@ Source: public space launch records, 1957–2022.
 ## Cost Estimate
 
 Each AI chat message uses ~2,000–3,000 tokens. At Claude Sonnet pricing that's roughly **$0.003–$0.005 per message**.
+
+---
+
+<details>
+<summary>Why run a local server for AI?</summary>
+
+Browsers enforce CORS restrictions that block direct client-side requests to `api.anthropic.com`. Running the backend locally allows the server to act as a thin proxy — it receives the chat request from the browser, attaches the API key server-side (never exposed to the client), and forwards the response back.
+
+```
+Browser → localhost:3000/api/chat → backend/server.js → api.anthropic.com
+```
+
+The rest of the app (charts, table, filters, functions) fetches data from `GET /api/missions` on startup and runs entirely client-side from that point.
+
+</details>
