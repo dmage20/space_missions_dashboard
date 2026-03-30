@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Space Missions Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- Loading overlay (hidden after data fetch) -->
+<div id="loadingOverlay">
+  <div class="load-bar"><div class="load-bar-inner"></div></div>
+  <p>LOADING MISSION DATA...</p>
+</div>
+
+<header>
+  <div class="logo-wrap">
+    <div class="logo-mark"><div class="logo-orbit"></div></div>
+    <div class="logo-text">
+      <h1>SPACE MISSIONS DASHBOARD</h1>
+      <p id="headerSub">1957 – 2022 · LOADING...</p>
+    </div>
+  </div>
+  <div class="header-kpis">
+    <div class="hkpi"><div class="hkpi-val" id="kpiMissions">—</div><div class="hkpi-lbl">Missions</div></div>
+    <div class="hkpi"><div class="hkpi-val" id="kpiSuccess">—</div><div class="hkpi-lbl">Success</div></div>
+    <div class="hkpi"><div class="hkpi-val" id="kpiOrgs">—</div><div class="hkpi-lbl">Orgs</div></div>
+    <div class="hkpi"><div class="hkpi-val" id="kpiRockets">—</div><div class="hkpi-lbl">Rockets</div></div>
+  </div>
+  <div class="status-pill"><div class="status-dot"></div>LIVE</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview')"><span class="tab-icon">📊</span>Overview</div>
+  <div class="tab" onclick="switchTab('table')"><span class="tab-icon">📋</span>Data Table</div>
+  <div class="tab" onclick="switchTab('ai')"><span class="tab-icon">✦</span>AI Analysis</div>
+  <div class="tab" onclick="switchTab('functions')"><span class="tab-icon">⚙️</span>Functions API</div>
+</div>
+
+<div class="main">
+
+  <!-- FILTER SIDEBAR -->
+  <div class="filter-sidebar" id="filterSidebar">
+    <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:2px;">Filters</div>
+
+    <div class="filter-group">
+      <label>Company</label>
+      <select class="filter-select" id="fCompany">
+        <option value="">All Companies</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Mission Status</label>
+      <select class="filter-select" id="fStatus">
+        <option value="">All Statuses</option>
+        <option value="Success">Success</option>
+        <option value="Failure">Failure</option>
+        <option value="Partial Failure">Partial Failure</option>
+        <option value="Prelaunch Failure">Prelaunch Failure</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Rocket Status</label>
+      <select class="filter-select" id="fRocketStatus">
+        <option value="">All</option>
+        <option value="Active">Active</option>
+        <option value="Retired">Retired</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Date Range</label>
+      <div class="filter-row">
+        <input type="text" class="filter-input" id="fDateFrom" placeholder="1957" maxlength="4"/>
+        <input type="text" class="filter-input" id="fDateTo" placeholder="2022" maxlength="4"/>
+      </div>
+    </div>
+
+    <button class="filter-btn" onclick="applyFilters()">Apply Filters</button>
+    <button class="filter-btn reset" onclick="resetFilters()">Reset</button>
+
+    <div class="filter-count" id="filterCount">— records</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- OVERVIEW TAB -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="overview-area" id="overviewArea">
+        <div class="chart-card full">
+          <div class="chart-hdr">
+            <div class="chart-dot"></div>
+            <div class="chart-title">Launches Per Year</div>
+            <div class="chart-sub" id="chartYearSub"></div>
+          </div>
+          <div class="chart-wrap h220"><canvas id="cYear"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-hdr">
+            <div class="chart-dot" style="background:var(--accent3)"></div>
+            <div class="chart-title">Mission Status</div>
+          </div>
+          <div class="chart-wrap h160"><canvas id="cStatus"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-hdr">
+            <div class="chart-dot" style="background:var(--accent2)"></div>
+            <div class="chart-title">Success Rate by Decade</div>
+          </div>
+          <div class="chart-wrap h160"><canvas id="cDecade"></canvas></div>
+        </div>
+        <div class="chart-card full">
+          <div class="chart-hdr">
+            <div class="chart-dot" style="background:var(--warn)"></div>
+            <div class="chart-title">Top 10 Organizations by Mission Count</div>
+          </div>
+          <div class="chart-wrap h200"><canvas id="cCompany"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-hdr">
+            <div class="chart-dot" style="background:var(--success)"></div>
+            <div class="chart-title">Launch Location (Top 8)</div>
+          </div>
+          <div class="chart-wrap h160"><canvas id="cLocation"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-hdr">
+            <div class="chart-dot" style="background:var(--failure)"></div>
+            <div class="chart-title">Top 10 Most Used Rockets</div>
+          </div>
+          <div class="chart-wrap h160"><canvas id="cRockets"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE TAB -->
+    <div class="tab-content" id="tab-table">
+      <div class="table-area">
+        <div class="table-toolbar">
+          <input type="text" class="table-search" id="tableSearch" placeholder="Search missions, companies, rockets..." oninput="tableSearchFilter(this.value)"/>
+          <span class="table-count" id="tableCount"></span>
+          <span class="sort-info" id="sortInfo"></span>
+        </div>
+        <div class="table-scroll">
+          <table id="dataTable">
+            <thead>
+              <tr>
+                <th onclick="sortTable('company')" id="th-company">Company <span class="sort-arrow" id="sa-company"></span></th>
+                <th onclick="sortTable('mission')" id="th-mission">Mission <span class="sort-arrow" id="sa-mission"></span></th>
+                <th onclick="sortTable('date')" id="th-date">Date <span class="sort-arrow" id="sa-date"></span></th>
+                <th onclick="sortTable('rocket')" id="th-rocket">Rocket <span class="sort-arrow" id="sa-rocket"></span></th>
+                <th onclick="sortTable('rocketStatus')" id="th-rocketStatus">Rocket Status <span class="sort-arrow" id="sa-rocketStatus"></span></th>
+                <th onclick="sortTable('missionStatus')" id="th-missionStatus">Mission Status <span class="sort-arrow" id="sa-missionStatus"></span></th>
+                <th onclick="sortTable('price')" id="th-price">Price (M$) <span class="sort-arrow" id="sa-price"></span></th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="table-pagination">
+          <button class="page-btn" id="prevBtn" onclick="changePage(-1)" disabled>← Prev</button>
+          <span class="page-info" id="pageInfo"></span>
+          <button class="page-btn" id="nextBtn" onclick="changePage(1)">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI TAB -->
+    <div class="tab-content" id="tab-ai">
+      <div class="ai-layout">
+        <div class="ai-viz" id="aiViz">
+          <div class="ai-default-msg" id="aiDefaultMsg">
+            <div class="ai-default-icon">✦</div>
+            <div>AI visualizations will appear here</div>
+            <div style="color:var(--text-muted);font-size:10px;">Ask a question in the chat →</div>
+          </div>
+        </div>
+        <div class="chat-panel">
+          <div class="chat-hdr">
+            <div class="chat-hdr-icon">✦</div>
+            <div class="chat-hdr-info">
+              <h3>Mission Intelligence AI</h3>
+              <p>Ask anything about the dataset</p>
+            </div>
+          </div>
+          <div class="chat-msgs" id="chatMsgs">
+            <div class="msg msg-sys"><div class="bubble" id="chatInitMsg">Loading dataset...</div></div>
+            <div class="msg msg-ai">
+              <div class="ai-av">✦</div>
+              <div class="bubble">Welcome! I have full access to the space missions dataset.<br><br>Ask me about trends, comparisons, success rates, or any pattern you want to explore. I'll generate charts to support every answer.</div>
+            </div>
+          </div>
+          <div class="suggestions" id="suggestions">
+            <div class="sug-pill" onclick="sendSug(this)">SpaceX vs NASA</div>
+            <div class="sug-pill" onclick="sendSug(this)">Cold War era launches</div>
+            <div class="sug-pill" onclick="sendSug(this)">Failure trends by decade</div>
+            <div class="sug-pill" onclick="sendSug(this)">Top 5 most active rockets</div>
+            <div class="sug-pill" onclick="sendSug(this)">Which country leads?</div>
+          </div>
+          <div class="chat-input-wrap">
+            <textarea class="chat-input" id="chatInput" placeholder="Ask about space missions..." rows="1"
+              onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FUNCTIONS API TAB -->
+    <div class="tab-content" id="tab-functions">
+      <div class="functions-area">
+        <div style="grid-column:1/-1;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);
+          letter-spacing:0.1em;padding-bottom:4px;text-transform:uppercase;">
+          8 required functions — served by the backend, reading live from space_missions.csv
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-name">getMissionCountByCompany()</div>
+          <div class="fn-signature">fn(company: string) → number</div>
+          <div class="fn-desc">Returns the total number of missions for a given company.</div>
+          <div class="fn-endpoint">GET /api/mission-count?company=…</div>
+          <div class="fn-test-row">
+            <input type="text" class="fn-input" id="f1-in" placeholder="e.g. NASA" value="NASA"/>
+            <button class="fn-run" onclick="callApi(1)">Run</button>
+          </div>
+          <div class="fn-result empty" id="f1-out">—</div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-name">getSuccessRate()</div>
+          <div class="fn-signature">fn(company: string) → float</div>
+          <div class="fn-desc">Returns success rate as % (0–100), rounded to 2 decimals.</div>
+          <div class="fn-endpoint">GET /api/success-rate?company=…</div>
+          <div class="fn-test-row">
+            <input type="text" class="fn-input" id="f2-in" placeholder="e.g. SpaceX" value="SpaceX"/>
+            <button class="fn-run" onclick="callApi(2)">Run</button>
+          </div>
+          <div class="fn-result empty" id="f2-out">—</div>
+        </div>
+
+        <div class="fn-card full">
+          <div class="fn-name">getMissionsByDateRange()</div>
+          <div class="fn-signature">fn(startDate: string, endDate: string) → string[]</div>
+          <div class="fn-desc">Returns mission names launched between two dates (inclusive), sorted chronologically.</div>
+          <div class="fn-endpoint">GET /api/missions-by-date?start=YYYY-MM-DD&amp;end=YYYY-MM-DD</div>
+          <div class="fn-test-row">
+            <input type="text" class="fn-input" id="f3-start" placeholder="1957-10-01" value="1957-10-01"/>
+            <input type="text" class="fn-input" id="f3-end" placeholder="1957-12-31" value="1957-12-31"/>
+            <button class="fn-run" onclick="callApi(3)">Run</button>
+          </div>
+          <div class="fn-result empty" id="f3-out">—</div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-name">getTopCompaniesByMissionCount()</div>
+          <div class="fn-signature">fn(n: number) → [string, number][]</div>
+          <div class="fn-desc">Returns top N companies by mission count. Ties broken alphabetically.</div>
+          <div class="fn-endpoint">GET /api/top-companies?n=…</div>
+          <div class="fn-test-row">
+            <input type="number" class="fn-input" id="f4-in" placeholder="5" value="5" min="1"/>
+            <button class="fn-run" onclick="callApi(4)">Run</button>
+          </div>
+          <div class="fn-result empty" id="f4-out">—</div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-name">getMissionStatusCount()</div>
+          <div class="fn-signature">fn() → object</div>
+          <div class="fn-desc">Returns count of missions for each status type.</div>
+          <div class="fn-endpoint">GET /api/mission-status-count</div>
+          <div class="fn-test-row">
+            <button class="fn-run" onclick="callApi(5)">Run</button>
+          </div>
+          <div class="fn-result empty" id="f5-out">—</div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-name">getMissionsByYear()</div>
+          <div class="fn-signature">fn(year: number) → number</div>
+          <div class="fn-desc">Returns the total number of missions launched in a specific year.</div>
+          <div class="fn-endpoint">GET /api/missions-by-year?year=…</div>
+          <div class="fn-test-row">
+            <input type="number" class="fn-input" id="f6-in" placeholder="2020" value="2020"/>
+            <button class="fn-run" onclick="callApi(6)">Run</button>
+          </div>
+          <div class="fn-result empty" id="f6-out">—</div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-name">getMostUsedRocket()</div>
+          <div class="fn-signature">fn() → string</div>
+          <div class="fn-desc">Returns the most-used rocket name. Alphabetical tie-breaking.</div>
+          <div class="fn-endpoint">GET /api/most-used-rocket</div>
+          <div class="fn-test-row">
+            <button class="fn-run" onclick="callApi(7)">Run</button>
+          </div>
+          <div class="fn-result empty" id="f7-out">—</div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-name">getAverageMissionsPerYear()</div>
+          <div class="fn-signature">fn(startYear: number, endYear: number) → float</div>
+          <div class="fn-desc">Average missions per year over a range, rounded to 2 decimals.</div>
+          <div class="fn-endpoint">GET /api/average-missions-per-year?start=…&amp;end=…</div>
+          <div class="fn-test-row">
+            <input type="number" class="fn-input" id="f8-start" placeholder="2010" value="2010"/>
+            <input type="number" class="fn-input" id="f8-end" placeholder="2020" value="2020"/>
+            <button class="fn-run" onclick="callApi(8)">Run</button>
+          </div>
+          <div class="fn-result empty" id="f8-out">—</div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script src="app.js"></script>
+</body>
+</html>
