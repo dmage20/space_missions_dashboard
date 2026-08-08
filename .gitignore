@@ -3,3 +3,7 @@ node_modules/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Instagram Bookmarks: your saved library and its cached thumbnails.
+# Personal data — never committed.
+instagram-bookmarks/data/

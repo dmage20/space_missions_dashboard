@@ -5,10 +5,13 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "node backend/server.js"
+    "dev": "node backend/server.js",
+    "bookmarks": "node instagram-bookmarks/server.js",
+    "bookmarks:test": "node --test instagram-bookmarks/test.js",
+    "bookmarks:icons": "node instagram-bookmarks/tools/make-icons.js"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "keywords": ["space", "dashboard", "anthropic", "claude"],
   "license": "MIT"

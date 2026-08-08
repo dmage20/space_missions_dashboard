@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <title>Bookmarks</title>
+  <meta name="description" content="Rearrange and de-prioritize your saved Instagram posts.">
+
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0d0d10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bookmarks">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" href="/icon-192.png">
+
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-row">
+      <h1>Bookmarks</h1>
+      <div class="topbar-actions">
+        <button id="btn-add" class="icon-btn" aria-label="Add a bookmark" title="Add a bookmark">＋</button>
+        <button id="btn-menu" class="icon-btn" aria-label="Library options" title="Library options">⋯</button>
+      </div>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+  </header>
+
+  <main>
+    <div id="grid" class="grid" role="list" aria-label="Saved posts, drag to reorder"></div>
+
+    <section id="empty" class="empty" hidden>
+      <div class="empty-mark" aria-hidden="true">🔖</div>
+      <h2>Nothing saved yet</h2>
+      <p>Paste an Instagram post link, or import your saved posts from an Instagram data export.</p>
+      <div class="empty-actions">
+        <button id="empty-add" class="btn btn-primary">Paste a link</button>
+        <button id="empty-import" class="btn">Import an export</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Tap-and-hold hint, shown once -->
+  <div id="hint" class="hint" hidden>
+    <strong>Tap</strong> a post to dim it · <strong>hold and drag</strong> to move it
+    <button id="hint-dismiss" class="hint-close" aria-label="Dismiss">✕</button>
+  </div>
+
+  <!-- Add sheet -->
+  <dialog id="add-sheet" class="sheet">
+    <form method="dialog" id="add-form" novalidate>
+      <h2>Add a post</h2>
+      <!-- Deliberately type="text": a share sheet hands over "look at this
+           https://… 🔥", which the parser handles but URL validation would
+           reject before we ever see it. -->
+      <input id="add-url" type="text" inputmode="url" autocomplete="off"
+             autocapitalize="off" spellcheck="false"
+             placeholder="https://www.instagram.com/p/…">
+      <p class="sheet-note">Paste a link, or share a post to this app from Instagram.</p>
+      <p id="add-error" class="sheet-error" hidden></p>
+      <div class="sheet-buttons">
+        <button value="cancel" class="btn">Cancel</button>
+        <button value="save" id="add-submit" class="btn btn-primary">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Options sheet -->
+  <dialog id="menu-sheet" class="sheet">
+    <form method="dialog">
+      <h2>Library</h2>
+      <button value="import" id="menu-import" class="row-btn" type="submit">
+        <span>Import Instagram export</span>
+        <small>saved_posts.json or .html from “Download Your Information”</small>
+      </button>
+      <button value="undim" id="menu-undim" class="row-btn" type="submit">
+        <span>Undim everything</span>
+        <small id="undim-count">Restore all dimmed posts</small>
+      </button>
+      <button value="export" id="menu-export" class="row-btn" type="submit">
+        <span>Export library as JSON</span>
+        <small>A backup of every link, caption and its position</small>
+      </button>
+      <div class="sheet-buttons">
+        <button value="cancel" class="btn">Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <input id="file-input" type="file" accept=".json,.html,application/json,text/html" hidden>
+
+  <script src="/app.js"></script>
+</body>
+</html>
